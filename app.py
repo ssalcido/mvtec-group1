@@ -1,6 +1,6 @@
-#version4 with except blocks, imports the emailapp, adding the R Script
+#version5 imports R libraries: os, subprocess / runs the R Script to transform the data [WIP]
 #stdlibs
-import logging, time, json
+import logging, time, json, os, subprocess
 
 #third-party libraries
 import requests
