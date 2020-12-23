@@ -19,7 +19,7 @@ if __name__ == "__main__":
         json_response = r.json()
     except Exception as err:
         logging.error("Error fetching data: %s" % str(err) )
-        # call the email function so it send a notification if error
+        # calls the email function to send a notification if there are errors while fetching data
         email_app()
 
     # data processing

@@ -1,4 +1,4 @@
-# this will set the target upload folder on S3 to your own directory
+# this will set the target upload folder on S3 to our own directory
 folder="mvtec-group1"
 bucket="mvtec-group1"
 region="eu-west-1"
