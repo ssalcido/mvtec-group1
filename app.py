@@ -13,13 +13,13 @@ import config
 logging.info("Starting....")
 
 if __name__ == "__main__":
-    # exception block to detect errors in fetching data
+    # exception block to detect errors while fetching data
     try:
         r = requests.get('https://coviddata.github.io/coviddata/v1/countries/stats.json')
         json_response = r.json()
     except Exception as err:
         logging.error("Error fetching data: %s" % str(err) )
-        # calls the email function to send a notification if there are errors while fetching data
+        # calls the email function to send a notification 
         email_app()
 
     # data processing
