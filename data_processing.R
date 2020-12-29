@@ -9,9 +9,9 @@ library(dplyr)
 library(readxl)
 
 # load data
-country_info <- read.csv("https://raw.githubusercontent.com/ssalcido/mvtec-group1/main/country-info.csv")
 covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
 covid$date <- as.Date(covid$date, format = "%Y-%m-%d")
+country_info <- read.csv("https://raw.githubusercontent.com/ssalcido/mvtec-group1/main/country-info.csv")
 
 # opens access to using column names (???)
 attach(covid)
