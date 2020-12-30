@@ -6,7 +6,6 @@ library(lubridate)
 library(generics)
 library(cluster)
 library(dplyr)
-library(readxl)
 
 # load data
 covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")

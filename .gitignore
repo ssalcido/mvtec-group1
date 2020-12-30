@@ -3,5 +3,4 @@
 *.pyc
 .RData
 .Rhistory
-*.csv
 covid_agg.csv
