@@ -5,8 +5,12 @@
     - This is our main application. It contains required libraries, runs scripts to extract raw data, transform it, upload it to AWS S3, and send notifications in case of errors while fetching data.
 - **config.py**
     - Config specs with logging info for AWS/S3
-- **emailapp.py**
-    - Script to send notifications emails with Python
+- **country-info.csv**
+    - Second dataset with information of different countries 
+- **data_processing.R**
+    - R Scripts for Data Transformation 
+- **emailapps.py**
+    - Scripts to send notifications emails with Python, if errors while fetching/uploading data
     - `en var` (environment variable) code to call the Gmail password on Heroku config vars.
 - **pipeline_flowchart**
     - A flow diagram visualising the pipeline.
