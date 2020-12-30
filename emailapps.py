@@ -14,6 +14,7 @@ def emailfetch() :
     receiver_email = ['mvtec.learning@gmail.com', 'san.salcido@gmail.com']  # Enter receiver address
     message = """\
     Subject: Hi there mvtec-group 1!  
+
     The app.py catched an error while fetching the data."""
 
     context = ssl.create_default_context()
@@ -28,6 +29,7 @@ def emailupload() :
     receiver_email = ['mvtec.learning@gmail.com', 'san.salcido@gmail.com']  # Enter receiver address
     message = """\
     Subject: Hi there mvtec-group 1!  
+    
     The app.py catched an error while uploading the data."""
 
     context = ssl.create_default_context()
