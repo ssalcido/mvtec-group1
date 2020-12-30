@@ -1,6 +1,7 @@
 # mvtec-group1
+##### Laura Arago, Sara Chodosh, Santiago Salcido, Oriol Vidal
+
 Repository for the first trimester’s final project
-Laura Arago, Sara Chodosh, Santiago Salcido, Oriol Vidal
 
 - **app.py**
     - This is our main application. It contains required libraries, runs scripts to extract raw data, transform it, upload it to AWS S3, and send notifications in case of errors while fetching data.
