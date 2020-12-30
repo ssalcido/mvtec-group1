@@ -11,7 +11,7 @@
     - R Scripts for Data Transformation 
 - **emailapps.py**
     - Scripts to send notifications emails with Python, if errors while fetching/uploading data
-    - `en var` (environment variable) code to call the Gmail password on Heroku config vars.
+    - `en var` (environment variable) code to call the Gmail credentials on Heroku config vars.
 - **init.R**
     - Code to install R packages
 - **pipeline_flowchart**
