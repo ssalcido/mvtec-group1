@@ -7,7 +7,7 @@ import requests
 
 #local imports
 from upload_to_s3 import upload_to_s3
-from emailapp import email_app
+from emailapps import emailfetch, emailupload
 import config
 
 logging.info("Starting....")
@@ -22,10 +22,10 @@ if __name__ == "__main__":
 
     except Exception as err:
         logging.error("Error fetching data: %s" % str(err) )
-        # calls the email function to send a notification 
-        email_app()
+        # if error, calls the emailfetch function to send a notification 
+        emailfetch()
 
-    # creates a .csv file to upload from the R Script 
+    # creates a .csv file from the R Script 
     with open("covid_agg.csv", 'r', encoding="utf-8") as f:
         body = f.read()
     
@@ -34,8 +34,8 @@ if __name__ == "__main__":
     try:
         upload_to_s3(body=body, filename="covid_agg.csv")    
     except Exception as err:
-        logging.error("Error uploading data: %s" % str(err)) 
+        logging.error("Error uploading data: %s" % str(err))
+        # if error, calls the emailupload function to send a notification 
+        emailupload()
     
     logging.info("finished upload")
-
-        

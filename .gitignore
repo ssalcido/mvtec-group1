@@ -1,8 +1,7 @@
 
 .DS_Store
-app-v4.py
 *.pyc
 .RData
 .Rhistory
-covid_agg.csv
 *.csv
+covid_agg.csv
