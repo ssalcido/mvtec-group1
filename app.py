@@ -26,13 +26,13 @@ if __name__ == "__main__":
         emailfetch()
 
     # creates a .csv file from the R Script 
-    with open("covid_agg.csv", 'r', encoding="utf-8") as f:
+    with open("forecasts.csv", 'r', encoding="utf-8") as f:
         body = f.read()
     
     logging.info("starting upload")
 
     try:
-        upload_to_s3(body=body, filename="covid_agg.csv")    
+        upload_to_s3(body=body, filename="forecasts.csv")    
     except Exception as err:
         logging.error("Error uploading data: %s" % str(err))
         # if error, calls the emailupload function to send a notification 

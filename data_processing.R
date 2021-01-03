@@ -1,20 +1,17 @@
-# test file!
-
 # load libraries
 library(tidyverse)
 library(lubridate)
 library(generics)
-library(cluster)
-library(dplyr)
+library(GGally)
+library(forecast)
+library(hts)
+library(rlang)
 
-# load data
-covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
+# load data (direct from url)
+covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv", header = T)
 covid$date <- as.Date(covid$date, format = "%Y-%m-%d")
 country_info <- read.csv("https://raw.githubusercontent.com/ssalcido/mvtec-group1/main/country-info.csv")
 
-# opens access to using column names (???)
-attach(covid)
-attach(country_info)
 
 # rename columns
 names(country_info) #get list of names
@@ -25,14 +22,14 @@ names(country_info) <- newNames
 # reassign values
 country_info$gov_type <- as_factor(country_info$gov_type)
 levels(country_info$gov_type)
-new_gov <- as_factor(c('const_mon', 'pres_rep', 'par_rep', 'semi_pres_rep', 'comm', 'in_trans',
-                       'isl_semi_pres_rep', 'abs_mon', 'isl_par_rep', 'pres_lim_dem', 'isl_pres_rep',
-                       'dict'))
+new_gov <- as_factor(c('pres_rep', 'par_rep', 'const_mon', 'semi_pres_rep', 'abs_mon', 
+                       'comm', 'pres_lim_dem', 'isl_pres_rep',
+                       'dict', 'in_trans', 'isl_semi_pres_rep', 'isl_par_rep')) 
 country_info$gov_type <- new_gov[match(country_info$gov_type, levels(country_info$gov_type))]
 
 country_info$corruption <- as_factor(country_info$corruption)
 levels(country_info$corruption)
-new_corruption <- as_factor(c('less', 'highly', 'NI'))
+new_corruption <- as_factor(c('highly', 'less', 'NI'))
 country_info$corruption <- new_corruption[match(country_info$corruption, levels(country_info$corruption))]
 
 country_info$development <- as_factor(country_info$development)
@@ -42,79 +39,134 @@ country_info$development <- new_dev[match(country_info$development, levels(count
 
 country_info$land_cond <- as_factor(country_info$land_cond)
 levels(country_info$land_cond)
-new_land <- as_factor(c('sea_access', 'landlocked', 'islands'))
+new_land <- as_factor(c('landlocked', 'sea_access', 'islands'))
 country_info$land_cond <- new_land[match(country_info$land_cond, levels(country_info$land_cond))]
 
+covid$tests_units[tests_units == 'NA']  <- ""
+covid$tests_units[tests_units == "people tested"] <- "people_tested"
+covid$tests_units[tests_units == "test performed"]  <- "tests_perf"
+covid$tests_units[tests_units == "units unclear"] <- "unclear"
+covid$tests_units[tests_units == "samples tested"]  <- "samples_tested"
 covid$tests_units <- as_factor(covid$tests_units)
-levels(covid$tests_units)
-new_units <- as_factor(c(NA, 'tests_perf', 'unclear', 'people_tested', 'samples_tested',
-                         'people_tested_withNonPCR', 'tests_perf_withNonPCR'))
-covid$tests_units <- new_units[match(covid$tests_units, levels(covid$tests_units))]
 
-# split up covid data to aggregate
-core_info <- covid %>%
-  select(iso_code, continent, location)
-
-averages <- covid %>%
-  select(location, date, reproduction_rate, icu_patients, 
-         icu_patients_per_million, hosp_patients, hosp_patients_per_million, weekly_icu_admissions,
-         weekly_icu_admissions_per_million, weekly_hosp_admissions, weekly_hosp_admissions_per_million,
-         tests_per_case, positive_rate, stringency_index)
-
-sums <- covid %>%
-  select(location, date, new_cases, new_cases_smoothed, new_deaths, 
-         new_deaths_smoothed, new_cases_per_million, new_cases_smoothed_per_million, 
-         new_deaths_per_million, new_deaths_smoothed_per_million, new_tests, new_tests_per_thousand,
-         new_tests_smoothed, new_tests_smoothed_per_thousand)
-
-largest <- covid %>%
-  select(location, date, total_cases, total_deaths, total_cases_per_million,
-         total_deaths_per_million, total_tests, total_tests_per_thousand)
-
-constant <- covid %>%
-  select(location, date, tests_units, population, population_density, median_age,
-         aged_65_older, aged_70_older, gdp_per_capita, extreme_poverty, cardiovasc_death_rate,
-         diabetes_prevalence, female_smokers, male_smokers, handwashing_facilities,
-         hospital_beds_per_thousand, life_expectancy, human_development_index)
-
-# aggregate
-core_info <- core_info %>%
-  group_by(iso_code, continent, location, week = week(date)) %>%
-  summarise()
-
-averages <- averages %>%
-  group_by(location, week = week(date)) %>%
-  summarise_at(c('reproduction_rate', 'icu_patients', 
-                 'icu_patients_per_million', 'hosp_patients', 'hosp_patients_per_million', 'weekly_icu_admissions',
-                 'weekly_icu_admissions_per_million', 'weekly_hosp_admissions', 'weekly_hosp_admissions_per_million',
-                 'tests_per_case', 'positive_rate', 'stringency_index'), mean, na.rm=T)
-
-sums <- sums %>%
-  group_by(location, week = week(date)) %>%
-  summarise_at(c('new_cases', 'new_cases_smoothed', 'new_deaths', 
-                 'new_deaths_smoothed', 'new_cases_per_million', 'new_cases_smoothed_per_million', 
-                 'new_deaths_per_million', 'new_deaths_smoothed_per_million', 'new_tests', 'new_tests_per_thousand',
-                 'new_tests_smoothed', 'new_tests_smoothed_per_thousand'), sum, na.rm=T)
-
-largest <- largest %>%
-  group_by(location, week = week(date)) %>%
-  summarise_at(c('total_cases', 'total_deaths', 'total_cases_per_million',
-                 'total_deaths_per_million', 'total_tests', 'total_tests_per_thousand'), max)
-
-constant <- constant %>%
-  group_by(location, week = week(date)) %>%
-  summarise_at(c('tests_units', 'population', 'population_density', 'median_age',
-                 'aged_65_older', 'aged_70_older', 'gdp_per_capita', 'extreme_poverty', 'cardiovasc_death_rate',
-                 'diabetes_prevalence', 'female_smokers', 'male_smokers', 'handwashing_facilities',
-                 'hospital_beds_per_thousand', 'life_expectancy', 'human_development_index'), first)
-
-## rejoin covid data
-covid_agg <- core_info %>%
-  left_join(averages, by = c('location', 'week')) %>%
-  left_join(sums, by = c('location', 'week')) %>%
-  left_join(largest, by = c('location', 'week')) %>%
-  left_join(constant, by = c('location', 'week')) %>%
+#merge datasets
+covid_daily <- covid %>%
   left_join(country_info, by = c('location' = 'name'))
 
-## export new dataframe as csv
-write_csv(covid_agg, 'covid_agg.csv', col_names = T, append = F)
+
+# filter data — include only variables that change over time, eliminate all NAs
+toConsider <- covid_daily %>%
+  select(location, date, total_deaths_per_million, reproduction_rate, 
+         stringency_index, new_cases_smoothed,
+         new_cases_smoothed_per_million, total_cases,  
+         total_cases_per_million, total_tests, total_tests_per_thousand) 
+
+toConsider <- toConsider[complete.cases(toConsider),] 
+
+# create the models
+toModel <- toConsider[toConsider$location %in% names(which(table(toConsider$location) >= 4)), ] # eliminate countries with less than 4 weeks of data/rows
+countries <- unique(as.character(toModel$location)) 
+
+
+#if forecasts objects exist use the created file (and so on accumulate the past predictions), if it doesn't (the first time it runs, create a new file)
+if(exists('forecasts')) {
+  return
+} else {
+forecasts <- data.frame(matrix(ncol = 5, nrow = 0)) # remember to re-run this line if anything goes wrong with the for loop!!
+colnames <- c('location', 'date', 'fcasted_deaths_avg', 'fcasted_deaths_low', 'fcasted_deaths_high')
+colnames(forecasts) <- colnames }
+
+
+coeffs <- data.frame(matrix(ncol = 6, nrow =0))
+colnames2 <- c('location', 'rep_rate', 'string_index', 'new_cases_smoothed_per_mil',
+               'total_cases_per_mil', 'total_tests')
+colnames(coeffs) <- colnames2
+
+for(i in countries) {
+  # create time series for single country
+  forTS <- toModel[toModel$location == i,]
+  ts <- ts(forTS) # makes data frame into a time series
+  ts <- ts[,2:dim(ts)[2]] # gets rid of first column, which is just the location
+  
+  # create model
+  model <- tslm(total_deaths_per_million ~ reproduction_rate +  
+                  stringency_index + new_cases_smoothed_per_million +   
+                  total_cases_per_million + total_tests,
+                data = ts)
+  #checkresiduals(model) #prints out a separate plot for each country!
+  
+  # create new data
+  lastMonthData <- tail(forTS, 30)
+  # these can just be averaged for the past month
+  new_repRate <- mean(lastMonthData %>% pull(reproduction_rate))
+  new_strinIndex <- mean(lastMonthData %>% pull(stringency_index))
+  new_newCases <- mean(lastMonthData %>% pull(new_cases_smoothed_per_million))
+  # for these, we have to find the amount that the total cases/tests has been increasing by
+  new_totalCases <- mean(diff(lastMonthData %>% pull(total_cases_per_million)))
+  new_totalTests <- mean(diff(lastMonthData %>% pull(total_tests)))
+  
+  # find the most recent value for the total cases/tests column (will be the max by default)
+  lastTotalCases <- lastMonthData %>% pull(total_cases_per_million) %>% max()
+  lastTotalTests <- lastMonthData %>% pull(total_tests) %>% max()
+  
+  # combine data into one data frame
+  newData <- data.frame(
+    reproduction_rate = c(rep(new_repRate, 4)),
+    stringency_index = c(rep(new_strinIndex, 4)),
+    new_cases_smoothed_per_million = c(rep(new_newCases, 4)),
+    total_cases_per_million = c(lastTotalCases + new_totalCases, 
+                                lastTotalCases + 2*new_totalCases,
+                                lastTotalCases + 3*new_totalCases,
+                                lastTotalCases + 4*new_totalCases),
+    total_tests = c(lastTotalTests + new_totalTests,
+                    lastTotalTests + 2*new_totalTests,
+                    lastTotalTests + 3*new_totalTests,
+                    lastTotalTests + 4*new_totalTests))
+  
+  
+  
+  # create the forecast -- we could plot this directly in R!
+  fcast <- forecast(model, newdata = newData)
+  
+  # get the data out of the forecast object
+  maxWeek <- max(lastMonthData$date)
+  
+  current_country <- c(as.character(rep(i, 4))) 
+  date <- as.character(c(maxWeek + days(7), maxWeek + days(14), maxWeek + days(21), maxWeek + days(30)))
+  fcasted_deaths_avg <- fcast$mean
+  fcasted_deaths_low <- fcast[['lower']][,2] # 95% confidence interval lower limit
+  fcasted_deaths_high <- fcast[['upper']][,2] # 95% confidence interval upper limit
+  elaboration <- as.character(c(Sys.Date()))
+  
+  fcasted_data <- cbind(current_country, date, fcasted_deaths_avg, 
+                        fcasted_deaths_low, fcasted_deaths_high, elaboration )
+  
+  
+  # combine all the forecasts into one big data frame
+  forecasts <- rbind(forecasts, fcasted_data)
+  forecasts$date <- as.Date(forecasts$date)
+  forecasts$elaboration <- as.Date(forecasts$elaboration)
+  
+  # make another data frame containing the model coefficients
+  new_coeffs <- cbind(i, fcast[['model']][["coefficients"]][['reproduction_rate']],
+                      fcast[['model']][["coefficients"]][['stringency_index']],
+                      fcast[['model']][["coefficients"]][['new_cases_smoothed_per_million']],
+                      fcast[['model']][["coefficients"]][['total_cases_per_million']],
+                      fcast[['model']][["coefficients"]][['total_tests']])
+  coeffs <- rbind(coeffs, new_coeffs)
+}
+#Remove the predictions that are duplicate and keep only the newests ones
+forecasts2 <- forecasts %>%
+  group_by(current_country, date, fcasted_deaths_avg, fcasted_deaths_high, fcasted_deaths_low, elaboration) %>% 
+  summarize(elaboration = max(elaboration)) %>%
+  ungroup()
+
+
+
+#Take real data and join with predictions in the same dataset
+FromDecember <- toConsider %>%
+  filter(date >= "2020-12-01")
+AllData <- FromDecember %>%
+  full_join(forecasts, by = c('location' = 'current_country', 'date'))
+write_csv2(AllData, 'forecasts.csv') # save the real data with the final data
+
