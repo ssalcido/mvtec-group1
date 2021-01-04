@@ -5,6 +5,7 @@ library(generics)
 library(GGally)
 library(forecast)
 library(hts)
+library(tidyverse)
 library(rlang)
 
 # load data (direct from url)
@@ -42,12 +43,14 @@ levels(country_info$land_cond)
 new_land <- as_factor(c('landlocked', 'sea_access', 'islands'))
 country_info$land_cond <- new_land[match(country_info$land_cond, levels(country_info$land_cond))]
 
-covid$tests_units[tests_units == 'NA']  <- ""
-covid$tests_units[tests_units == "people tested"] <- "people_tested"
-covid$tests_units[tests_units == "test performed"]  <- "tests_perf"
-covid$tests_units[tests_units == "units unclear"] <- "unclear"
-covid$tests_units[tests_units == "samples tested"]  <- "samples_tested"
+unique(covid$tests_units)
+covid$tests_units[covid$tests_units == 'NA']  <- ""
+covid$tests_units[covid$tests_units == "people tested"] <- "people_tested"
+covid$tests_units[covid$tests_units == "tests performed"]  <- "tests_perf"
+covid$tests_units[covid$tests_units == "units unclear"] <- "unclear"
+covid$tests_units[covid$tests_units == "samples tested"]  <- "samples_tested"
 covid$tests_units <- as_factor(covid$tests_units)
+levels(covid$tests_units)
 
 #merge datasets
 covid_daily <- covid %>%
@@ -72,10 +75,9 @@ countries <- unique(as.character(toModel$location))
 if(exists('forecasts')) {
   return
 } else {
-forecasts <- data.frame(matrix(ncol = 5, nrow = 0)) # remember to re-run this line if anything goes wrong with the for loop!!
-colnames <- c('location', 'date', 'fcasted_deaths_avg', 'fcasted_deaths_low', 'fcasted_deaths_high')
-colnames(forecasts) <- colnames }
-
+  forecasts <- data.frame(matrix(ncol = 5, nrow = 0)) # remember to re-run this line if anything goes wrong with the for loop!!
+  colnames <- c('location', 'date', 'fcasted_deaths_avg', 'fcasted_deaths_low', 'fcasted_deaths_high')
+  colnames(forecasts) <- colnames }
 
 coeffs <- data.frame(matrix(ncol = 6, nrow =0))
 colnames2 <- c('location', 'rep_rate', 'string_index', 'new_cases_smoothed_per_mil',
@@ -156,10 +158,11 @@ for(i in countries) {
   coeffs <- rbind(coeffs, new_coeffs)
 }
 #Remove the predictions that are duplicate and keep only the newests ones
+# & only keep those that predict what is going to happen after december 2020
 forecasts2 <- forecasts %>%
   group_by(current_country, date, fcasted_deaths_avg, fcasted_deaths_high, fcasted_deaths_low, elaboration) %>% 
   summarize(elaboration = max(elaboration)) %>%
-  ungroup()
+  ungroup() %>% filter(date >= "2020-12-01")
 
 
 
@@ -167,6 +170,6 @@ forecasts2 <- forecasts %>%
 FromDecember <- toConsider %>%
   filter(date >= "2020-12-01")
 AllData <- FromDecember %>%
-  full_join(forecasts, by = c('location' = 'current_country', 'date'))
+  full_join(forecasts2, by = c('location' = 'current_country', 'date'))
 write_csv2(AllData, 'forecasts.csv') # save the real data with the final data
 

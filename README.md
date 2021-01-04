@@ -9,13 +9,13 @@ Repository for the first trimester’s final project
     - Config specs with logging info for AWS/S3
 - **country-info.csv**
     - Second dataset with information of different countries 
-- **data_processing.R**
+- **PredictiveDaily.R**
     - R Scripts for Data Transformation 
 - **emailapps.py**
     - Scripts to send notifications emails with Python, if errors while fetching/uploading data
     - `en var` (environment variable) code to call the Gmail credentials on Heroku config vars.
 - **init.R**
-    - Code to install R packages
+    - Installs R packages on Heroku
 - **pipeline_flowchart**
     - A flow diagram visualising the pipeline.
 - **Procfile**

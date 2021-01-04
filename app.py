@@ -18,7 +18,7 @@ if __name__ == "__main__":
         #runs the R Script
         this_file = os.path.abspath(__file__)
         os.chdir(os.path.dirname(this_file))
-        subprocess.run(["Rscript", "data_processing.R"])
+        subprocess.run(["Rscript", "PredictiveDaily.R"])
 
     except Exception as err:
         logging.error("Error fetching data: %s" % str(err) )
