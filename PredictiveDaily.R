@@ -9,7 +9,7 @@ library(tidyverse)
 library(rlang)
 
 # load data (direct from url)
-covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv", header = T)
+covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
 covid$date <- as.Date(covid$date, format = "%Y-%m-%d")
 country_info <- read.csv("https://raw.githubusercontent.com/ssalcido/mvtec-group1/main/country-info.csv")
 
@@ -113,17 +113,23 @@ for(i in countries) {
   
   # combine data into one data frame
   newData <- data.frame(
-    reproduction_rate = c(rep(new_repRate, 4)),
-    stringency_index = c(rep(new_strinIndex, 4)),
-    new_cases_smoothed_per_million = c(rep(new_newCases, 4)),
+    reproduction_rate = c(rep(new_repRate, 7)),
+    stringency_index = c(rep(new_strinIndex, 7)),
+    new_cases_smoothed_per_million = c(rep(new_newCases, 7)),
     total_cases_per_million = c(lastTotalCases + new_totalCases, 
                                 lastTotalCases + 2*new_totalCases,
                                 lastTotalCases + 3*new_totalCases,
-                                lastTotalCases + 4*new_totalCases),
+                                lastTotalCases + 4*new_totalCases,
+                                lastTotalCases + 5*new_totalCases,
+                                lastTotalCases + 6*new_totalCases,
+                                lastTotalCases + 7*new_totalCases),
     total_tests = c(lastTotalTests + new_totalTests,
                     lastTotalTests + 2*new_totalTests,
                     lastTotalTests + 3*new_totalTests,
-                    lastTotalTests + 4*new_totalTests))
+                    lastTotalTests + 4*new_totalTests,
+                    lastTotalTests + 5*new_totalTests,
+                    lastTotalTests + 6*new_totalTests,
+                    lastTotalTests + 7*new_totalTests))
   
   
   
@@ -133,8 +139,8 @@ for(i in countries) {
   # get the data out of the forecast object
   maxWeek <- max(lastMonthData$date)
   
-  current_country <- c(as.character(rep(i, 4))) 
-  date <- as.character(c(maxWeek + days(7), maxWeek + days(14), maxWeek + days(21), maxWeek + days(30)))
+  current_country <- c(as.character(rep(i, 7))) 
+  date <- as.character(c(Sys.Date() + days(1), Sys.Date() + days(2), Sys.Date() + days(3), Sys.Date() + days(4), Sys.Date() + days(5),Sys.Date() + days(6),Sys.Date() + days(7)))
   fcasted_deaths_avg <- fcast$mean
   fcasted_deaths_low <- fcast[['lower']][,2] # 95% confidence interval lower limit
   fcasted_deaths_high <- fcast[['upper']][,2] # 95% confidence interval upper limit
@@ -159,16 +165,14 @@ for(i in countries) {
 }
 #Remove the predictions that are duplicate and keep only the newests ones
 # & only keep those that predict what is going to happen after december 2020
-forecasts2 <- forecasts %>%
-  group_by(current_country, date, fcasted_deaths_avg, fcasted_deaths_high, fcasted_deaths_low, elaboration) %>% 
-  summarize(elaboration = max(elaboration)) %>%
-  ungroup() %>% filter(date >= "2020-12-01")
-
+forecasts2 <- forecasts %>% 
+  arrange(desc(elaboration), .by_group = FALSE) %>%
+  distinct(current_country, date, .keep_all = TRUE)
 
 
 #Take real data and join with predictions in the same dataset
 FromDecember <- toConsider %>%
-  filter(date >= "2020-12-01")
+  filter(date >= "2020-09-01")
 AllData <- FromDecember %>%
   full_join(forecasts2, by = c('location' = 'current_country', 'date'))
 write_csv2(AllData, 'forecasts.csv') # save the real data with the final data
