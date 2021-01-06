@@ -179,10 +179,11 @@ FromSeptember <- covid_daily %>%
          stringency_index, new_cases_smoothed,
          new_cases_smoothed_per_million, total_cases,  
          total_cases_per_million, total_tests, total_tests_per_thousand) %>%
-  filter(date >= "2020-09-01")
-
+  filter(date >= "2020-09-01") %>%
+  filter(location %in% toConsider$location)
 
 AllData <- FromSeptember %>%
-  full_join(forecasts2, by = c('location' = 'current_country', 'date'))
+  full_join(forecasts2, by = c('location' = 'current_country', 'date')) %>%
+  arrange(location, date)
 write.table(AllData, 'forecasts.csv', sep = ',', dec = '.') # save the real data with the final data
 
