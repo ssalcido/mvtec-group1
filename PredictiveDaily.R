@@ -185,5 +185,5 @@ FromSeptember <- covid_daily %>%
 AllData <- FromSeptember %>%
   full_join(forecasts2, by = c('location' = 'current_country', 'date')) %>%
   arrange(location, date)
-write.table(AllData, 'forecasts.csv', sep = ',', dec = '.') # save the real data with the final data
+write.table(AllData, 'forecasts.csv', sep = ',', dec = '.', row.names=FALSE) # save the real data with the final data
 
