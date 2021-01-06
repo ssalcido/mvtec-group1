@@ -7,6 +7,9 @@ library(forecast)
 library(hts)
 library(tidyverse)
 library(rlang)
+library(forcats)
+library(dplyr)
+
 
 # load data (direct from url)
 covid <- read.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
@@ -98,7 +101,7 @@ for(i in countries) {
   #checkresiduals(model) #prints out a separate plot for each country!
   
   # create new data
-  lastMonthData <- tail(forTS, 30)
+  lastMonthData <- tail(forTS, 7)
   # these can just be averaged for the past month
   new_repRate <- mean(lastMonthData %>% pull(reproduction_rate))
   new_strinIndex <- mean(lastMonthData %>% pull(stringency_index))
@@ -171,9 +174,15 @@ forecasts2 <- forecasts %>%
 
 
 #Take real data and join with predictions in the same dataset
-FromDecember <- toConsider %>%
+FromSeptember <- covid_daily %>%
+  select(location, date, total_deaths_per_million, reproduction_rate, 
+         stringency_index, new_cases_smoothed,
+         new_cases_smoothed_per_million, total_cases,  
+         total_cases_per_million, total_tests, total_tests_per_thousand) %>%
   filter(date >= "2020-09-01")
-AllData <- FromDecember %>%
+
+
+AllData <- FromSeptember %>%
   full_join(forecasts2, by = c('location' = 'current_country', 'date'))
-write_csv2(AllData, 'forecasts.csv') # save the real data with the final data
+write.table(AllData, 'forecasts.csv', sep = ',', dec = '.') # save the real data with the final data
 
