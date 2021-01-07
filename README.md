@@ -1,5 +1,5 @@
 # mvtec-group1
-###### LAURA ARAGO, SARA CHODOSH, SANTIAGO SALCIDO, ORIOL VIDAL
+###### LAURA ARAGÓ, SARA CHODOSH, SANTIAGO SALCIDO, ORIOL VIDAL
 
 Repository for the first trimester’s final project
 
